@@ -27,12 +27,11 @@ const lastBalanceValue = localStorage.getItem('lastBalanceValue')
 const contractAddress = '0x6b304e591bfb132d2c9a11e4F016270767200CFD'
 
 const Ethereum: React.FC = () => {
-    const [isConnected, setIsConnected] = useState(window?.ethereum?.isConnected() || false)
     const [isLoadingRefresh, setIsLoadingRefresh] = useState(false)
     const [isLoadingTransaction, setIsLoadingTransaction] = useState(false)
     const [isConnectionRequestPending, setIsConnectionRequestPending] = useState(false)
-    const [sender, setSender] = useState('0x0FAde8c8Ca8b72E3A3384C0447f8E7c2BE721b10')
-    const [recipient, setRecipient] = useState('0x2d30B8451a68B5026B086D3D9A0179740eE53600')
+    const [sender, setSender] = useState('')
+    const [recipient, setRecipient] = useState('')
     const [amount, setAmount] = useState(0)
 
     // Response
@@ -72,17 +71,15 @@ const Ethereum: React.FC = () => {
         if (sender) {
             getBalanceOf()
         }
-    }, [])
-
-    useEffect(() => {
-        if (sender) {
-            getBalanceOf()
-        }
     }, [sender])
 
     const handleTransfer = async () => {
         if (!balance || balance < amount) {
             alert('Недостаточно средств на балансе')
+            return
+        }
+        if(sender === recipient) {
+            alert('Будем отправлять самому себе?')
             return
         }
         setIsLoadingTransaction(true)
@@ -115,7 +112,7 @@ const Ethereum: React.FC = () => {
 
     return <Container>
         {
-            !isConnected
+            !window?.ethereum?.isConnected()
                 ? <Button
                     variant='contained'
                     disabled={isConnectionRequestPending}
@@ -124,7 +121,6 @@ const Ethereum: React.FC = () => {
                         window.ethereum?.request({ method: 'eth_requestAccounts' })
                             .then((res: string[]) => {
                                 setSender(res[0])
-                                setIsConnected(true)
                             })
                             .finally(() => setIsConnectionRequestPending(false))
                     }}
@@ -150,7 +146,7 @@ const Ethereum: React.FC = () => {
                         </>
                     }
                     <Box justifyContent='center' alignItems='center' display='flex'>
-                        <span>Balance: {balance || balance === 0 ? balance : 'Unknown'}</span>
+                        <span>Balance: {balance || balance === 0 ? balance + ' Hord' : 'Unknown'}</span>
                         <Tooltip title='Refresh balance'>
                             <IconButton
                                 disabled={sender.length !== WALLET_ADDRESS_MAX_LENGTH}
