@@ -45,6 +45,15 @@ const Ethereum: React.FC = () => {
     const web3 = new Web3(window?.ethereum as provider)
     const contract = new web3.eth.Contract(abi, contractAddress)
 
+    // @ts-ignore
+    window?.ethereum?.on('accountsChanged', (accounts: string[]) => {
+        // Time to reload your interface with accounts[0]!
+        console.log(accounts)
+        if(accounts?.length) {
+            setSender(accounts[0])
+        }
+    })
+
     // console.log(web3.utils.toWei(amount.toString()))
     const getBalanceOf = () => {
         setIsLoadingRefresh(true)
@@ -131,6 +140,15 @@ const Ethereum: React.FC = () => {
         <Grid container spacing={2}>
             <Grid item xs={6}>
                 <div>
+                    {
+                        contractAddress && <>
+                            Contract Address:
+                            &nbsp;
+                            <a href={`https://ropsten.etherscan.io/address/${contractAddress}`} target='_blank'>
+                                {contractAddress}
+                            </a>
+                        </>
+                    }
                     <Box justifyContent='center' alignItems='center' display='flex'>
                         <span>Balance: {balance || balance === 0 ? balance : 'Unknown'}</span>
                         <Tooltip title='Refresh balance'>
@@ -170,11 +188,15 @@ const Ethereum: React.FC = () => {
                             transactionReceipt.contractAddress &&
                             <div>Contract Address: {transactionReceipt.contractAddress}</div>
                         }
-                        <div>{
-                            transactionReceipt.status
-                                ? <ThumbUp style={{color: 'green'}}/>
-                                : <ThumbDown style={{color: 'red'}}/>
-                        }</div>
+                        <div>
+                            Transaction Status:
+                            &nbsp;
+                            {
+                                transactionReceipt.status
+                                    ? <ThumbUp style={{color: 'green'}}/>
+                                    : <ThumbDown style={{color: 'red'}}/>
+                            }
+                        </div>
                     </>
                 }
 
