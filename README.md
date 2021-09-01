@@ -1,6 +1,9 @@
 ### HORD Token 
-https://hord.app/  
-MetaMask (web/mobile) - helps you to handle your Ethereum wallets. Should be installed.
+https://hord.app/ 
+
+![https://hord.app/ ](https://uploads-ssl.webflow.com/60463348112d79b6f81cb3b6/6057320d91ba0c79e6e92828_Hord%20logo%20new.svg)
+
+MetaMask (web/mobile) - helps you to handle your Ethereum wallets. Should be installed:  
 https://metamask.io/
 
 Contract Address in Ropsten Testnet Network:  
