@@ -6,6 +6,7 @@ interface IMetaMaskProvider extends provider{
     isMetaMask: boolean
     request: (any) => Promise<string[]>
     sendAsync: () => any
+    selectedAddress: string
 }
 
 declare global {

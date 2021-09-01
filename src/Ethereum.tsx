@@ -30,7 +30,7 @@ const Ethereum: React.FC = () => {
     const [isLoadingRefresh, setIsLoadingRefresh] = useState(false)
     const [isLoadingTransaction, setIsLoadingTransaction] = useState(false)
     const [isConnectionRequestPending, setIsConnectionRequestPending] = useState(false)
-    const [sender, setSender] = useState('')
+    const [sender, setSender] = useState(window?.ethereum?.selectedAddress || '')
     const [recipient, setRecipient] = useState('')
     const [amount, setAmount] = useState(0)
 
@@ -71,6 +71,7 @@ const Ethereum: React.FC = () => {
         if (sender) {
             getBalanceOf()
         }
+        // eslint-disable-next-line
     }, [sender])
 
     const handleTransfer = async () => {
@@ -140,23 +141,25 @@ const Ethereum: React.FC = () => {
                         contractAddress && <>
                             Contract Address:
                             &nbsp;
-                            <a href={`https://ropsten.etherscan.io/address/${contractAddress}`} target='_blank'>
+                            <a href={`https://ropsten.etherscan.io/address/${contractAddress}`} target='_blank' rel="noreferrer">
                                 {contractAddress}
                             </a>
                         </>
                     }
                     <Box justifyContent='center' alignItems='center' display='flex'>
                         <span>Balance: {balance || balance === 0 ? balance + ' Hord' : 'Unknown'}</span>
-                        <Tooltip title='Refresh balance'>
-                            <IconButton
-                                disabled={sender.length !== WALLET_ADDRESS_MAX_LENGTH}
-                                onClick={() => getBalanceOf()}
-                                size='small'
-                            >
-                                {isLoadingRefresh ? <CircularProgress size={14}/> : <Refresh fontSize='small'/>}
-                            </IconButton>
-                        </Tooltip>
 
+                        <IconButton
+                            disabled={sender.length !== WALLET_ADDRESS_MAX_LENGTH}
+                            onClick={() => getBalanceOf()}
+                            size='small'
+                        >
+                            <Tooltip title='Refresh balance'>
+                                <span>
+                                    {isLoadingRefresh ? <CircularProgress size={14}/> : <Refresh fontSize='small'/>}
+                                </span>
+                            </Tooltip>
+                        </IconButton>
                     </Box>
                 </div>
 
@@ -165,7 +168,7 @@ const Ethereum: React.FC = () => {
                     <div>
                         Transaction Hash:
                         &nbsp;
-                        <a href={`https://ropsten.etherscan.io/tx/${transactionHash}`} target='_blank'>
+                        <a href={`https://ropsten.etherscan.io/tx/${transactionHash}`} target='_blank' rel="noreferrer">
                             {transactionHash}
                         </a>
                     </div>
