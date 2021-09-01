@@ -23,7 +23,6 @@ function App() {
             }
 
             {
-                // @ts-ignore
                 window?.ethereum?.isMetaMask &&
                 <Ethereum/>
             }
