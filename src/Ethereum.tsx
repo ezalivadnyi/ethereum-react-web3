@@ -14,7 +14,7 @@ import {
     Tooltip,
     Typography
 } from "@material-ui/core";
-import {Refresh, Send} from "@material-ui/icons";
+import {Refresh, Send, ThumbDown, ThumbUp} from "@material-ui/icons";
 import {TransactionReceipt} from "web3-eth"
 import {abi} from "./jsonInterfaceABI";
 import {provider} from "web3-core";
@@ -24,10 +24,12 @@ const INPUT_WIDTH = 390
 const DIVIDE_VALUE = 1000000000000000000
 
 const lastBalanceValue = localStorage.getItem('lastBalanceValue')
+const contractAddress = '0x6b304e591bfb132d2c9a11e4F016270767200CFD'
 
 const Ethereum: React.FC = () => {
     const [isConnected, setIsConnected] = useState(window?.ethereum?.isConnected() || false)
-    const [isLoading, setIsLoading] = useState(false)
+    const [isLoadingRefresh, setIsLoadingRefresh] = useState(false)
+    const [isLoadingTransaction, setIsLoadingTransaction] = useState(false)
     const [isConnectionRequestPending, setIsConnectionRequestPending] = useState(false)
     const [sender, setSender] = useState('0x0FAde8c8Ca8b72E3A3384C0447f8E7c2BE721b10')
     const [recipient, setRecipient] = useState('0x2d30B8451a68B5026B086D3D9A0179740eE53600')
@@ -41,13 +43,11 @@ const Ethereum: React.FC = () => {
     // 0x3	3	Ropsten Test Network
 
     const web3 = new Web3(window?.ethereum as provider)
-    const contract = new web3.eth.Contract(abi, '0x6b304e591bfb132d2c9a11e4F016270767200CFD', {
-        from: '0x0FAde8c8Ca8b72E3A3384C0447f8E7c2BE721b10'
-    })
+    const contract = new web3.eth.Contract(abi, contractAddress)
 
     // console.log(web3.utils.toWei(amount.toString()))
     const getBalanceOf = () => {
-        setIsLoading(true)
+        setIsLoadingRefresh(true)
         contract?.methods?.balanceOf(sender).call()
             .then((value: any) => {
                 const res = +value / DIVIDE_VALUE
@@ -55,7 +55,7 @@ const Ethereum: React.FC = () => {
                 setBalance(+res)
             })
             .finally(() => {
-                setIsLoading(false)
+                setIsLoadingRefresh(false)
             })
     }
 
@@ -76,20 +76,9 @@ const Ethereum: React.FC = () => {
             alert('Недостаточно средств на балансе')
             return
         }
-
-        const estimateGas = await contract.methods.transfer(recipient, web3.utils.toWei(amount.toString())).estimateGas({
-            from: sender
-        })
-        console.log({sender})
-
-        contract.methods.transfer(recipient, web3.utils.toWei('100', 'ether'))
-            //        contract.methods.transfer(recipient, web3.utils.toWei(amount.toString()))
-            .send({
-                from:  '0x1b1872BE0f8685B234c487ECec406f7770ca63eD',
-                // gas: estimateGas,
-                // gasPrice: '30000000000000',
-                // value: web3.utils.toWei(amount.toString())
-            })
+        setIsLoadingTransaction(true)
+        contract.methods.transfer(recipient, web3.utils.toWei(amount.toString(), 'ether'))
+            .send({from:  sender})
             .on('error', (error: any) => {
                 console.error(error)
             })
@@ -98,6 +87,7 @@ const Ethereum: React.FC = () => {
             })
             .on('receipt', (receipt: TransactionReceipt) => {
                 console.log(receipt)
+                setTransactionReceipt(receipt)
                 //console.log(receipt.contractAddress) // contains the new contract address
             })
             .on('confirmation', (confirmationNumber: any, receipt: any) => {
@@ -107,7 +97,11 @@ const Ethereum: React.FC = () => {
             .then(function(newContractInstance: any){
                 console.log(newContractInstance)
                 // console.log(newContractInstance.options.address) // instance with the new contract address
-            });
+            })
+            .finally(() => {
+                getBalanceOf()
+                setIsLoadingTransaction(false)
+            })
     }
 
     return <Container>
@@ -145,7 +139,7 @@ const Ethereum: React.FC = () => {
                                 onClick={() => getBalanceOf()}
                                 size='small'
                             >
-                                {isLoading ? <CircularProgress size={14}/> : <Refresh fontSize='small'/>}
+                                {isLoadingRefresh ? <CircularProgress size={14}/> : <Refresh fontSize='small'/>}
                             </IconButton>
                         </Tooltip>
 
@@ -154,7 +148,13 @@ const Ethereum: React.FC = () => {
 
                 {
                     transactionHash &&
-                    <div>Transaction Hash: {transactionHash}</div>
+                    <div>
+                        Transaction Hash:
+                        &nbsp;
+                        <a href={`https://ropsten.etherscan.io/tx/${transactionHash}`} target='_blank'>
+                            {transactionHash}
+                        </a>
+                    </div>
                 }
                 {
                     transactionReceipt &&
@@ -166,7 +166,15 @@ const Ethereum: React.FC = () => {
                         <div>Cumulative Gas Used: {transactionReceipt.cumulativeGasUsed}</div>
                         <div>Block Hash: {transactionReceipt.blockHash}</div>
                         <div>Block Number: {transactionReceipt.blockNumber}</div>
-                        <div>Contract Address: {transactionReceipt.contractAddress}</div>
+                        {
+                            transactionReceipt.contractAddress &&
+                            <div>Contract Address: {transactionReceipt.contractAddress}</div>
+                        }
+                        <div>{
+                            transactionReceipt.status
+                                ? <ThumbUp style={{color: 'green'}}/>
+                                : <ThumbDown style={{color: 'red'}}/>
+                        }</div>
                     </>
                 }
 
@@ -228,8 +236,8 @@ const Ethereum: React.FC = () => {
                     variant='contained'
                     color='primary'
                     onClick={() => handleTransfer()}
-                    startIcon={<Send/>}
-                    disabled={!balance || !amount || recipient.length !== WALLET_ADDRESS_MAX_LENGTH || sender.length !== WALLET_ADDRESS_MAX_LENGTH}
+                    startIcon={isLoadingTransaction ? <CircularProgress size={14}/> : <Send/>}
+                    disabled={isLoadingTransaction || !balance || !amount || recipient.length !== WALLET_ADDRESS_MAX_LENGTH || sender.length !== WALLET_ADDRESS_MAX_LENGTH}
                 >
                     Send
                 </Button>
